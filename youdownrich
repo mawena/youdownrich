@@ -1,0 +1,118 @@
+#!/bin/python3
+from pytube import YouTube
+from pytube import Playlist
+from rich.console import Console
+from rich.progress import (
+    Progress,
+    TextColumn,
+    BarColumn,
+    DownloadColumn,
+    TransferSpeedColumn,
+    TimeRemainingColumn,
+)
+
+progress, task = None, None
+video_or_playlist_choice, youtube_link = None, None
+console = Console()
+
+def _banner():
+        console.print(
+            """[yellow] __   __  _______    ______   _______  _     _  __    _ 
+        |  | |  ||       |  |      | |       || | _ | ||  |  | |
+        |  |_|  ||_     _|  |  _    ||   _   || || || ||   |_| |
+        |       |  |   |    | | |   ||  | |  ||       ||       |
+        |_     _|  |   |    | |_|   ||  |_|  ||       ||  _    |
+          |   |    |   |    |       ||       ||   _   || | |   |
+          |___|    |___|    |______| |_______||__| |__||_|  |__|
+    [/yellow]
+            1-) Download youtube video
+            2-) Download youtube playlist
+            """
+        )
+
+def _choice():
+    global video_or_playlist_choice, youtube_link
+    console.clear()
+    _banner()
+
+    video_or_playlist_choice = int(input("votre choix: "))
+    if video_or_playlist_choice == 1:
+        youtube_link = input("Lien de la video: ")
+    else:
+        youtube_link = input("Lien de la playlist: ")
+_choice()
+
+
+with Progress(
+    TextColumn("[bold blue]{task.fields[filename]}[/bold blue]", justify="left"),
+    BarColumn(bar_width=None),
+    "[progress.percentage]{task.percentage:>3.1f}%",
+    "•",
+    DownloadColumn(),
+    "•",
+    TransferSpeedColumn(),
+    "•",
+    TimeRemainingColumn(),
+) as progress:
+
+    def _start():
+        global video_or_playlist_choice, youtube_link
+        console.clear()
+        if video_or_playlist_choice == 1:
+            video(youtube_link)
+        else:
+            playlist(youtube_link)
+
+    def downloading(stream, chunk, bytes_remaining):
+        global progress, task
+        # console.print(int(((stream.filesize - bytes_remaining)/stream.filesize)*100))
+        progress.update(task, completed=int(stream.filesize - bytes_remaining))
+
+    def video(link):
+        global progress, task
+        youtube = YouTube(link, on_progress_callback=downloading)
+
+        console.print("[blue]-----Download start-----[/blue]")
+        try:
+            stream = youtube.streams.get_highest_resolution()
+            task = progress.add_task(
+                f"[green]{stream.title}[/green]",
+                total=stream.filesize,
+                filename=stream.title,
+            )
+            stream.download("/home/mawena/Downloads/Youtube", skip_existing=False)
+        except Exception:
+            console.print("[red]Mistake")
+
+    def playlist(link):
+        global progress, task
+        console.print(
+            "[yellow]-----------Playlist processing and Start of Downloads-----------"
+        )
+        youtube_playlist = Playlist(link)
+        for index, youtube in enumerate(youtube_playlist.videos, 1):
+            youtube.register_on_progress_callback(downloading)
+            if index < 10:
+                index = f"0{index}-"
+            else:
+                index = f"{index}-"
+
+            try:
+                stream = youtube.streams.get_highest_resolution()
+                task = progress.add_task(
+                    f"[green]{stream.title}[/green]",
+                    total=stream.filesize,
+                    filename=f"{index}{stream.title}",
+                )
+                stream.download(
+                    f"/home/mawena/Downloads/Youtube/{youtube_playlist.title}/",
+                    filename_prefix=index,
+                    skip_existing=False,
+                )
+            except Exception:
+                console.print(Exception)
+        console.print("[blue]-----------Fin-----------")
+
+    if __name__ == "__main__":
+        console.clear()
+        _start()
