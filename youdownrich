@@ -1,4 +1,5 @@
-#!/bin/python3
+#!/bin/python3 
+import os
 from pytube import YouTube
 from pytube import Playlist
 from rich.console import Console
@@ -13,11 +14,12 @@ from rich.progress import (
 
 progress, task = None, None
 video_or_playlist_choice, youtube_link = None, None
+save_path, clear_cmd = None, None
 console = Console()
 
 def _banner():
         console.print(
-            """[yellow] __   __  _______    ______   _______  _     _  __    _ 
+            """[yellow]         __   __  _______    ______   _______  _     _  __    _ 
         |  | |  ||       |  |      | |       || | _ | ||  |  | |
         |  |_|  ||_     _|  |  _    ||   _   || || || ||   |_| |
         |       |  |   |    | | |   ||  | |  ||       ||       |
@@ -32,7 +34,14 @@ def _banner():
 
 def _choice():
     global video_or_playlist_choice, youtube_link
-    console.clear()
+    global save_path, clear_cmd
+    if(os.name == "nt"):
+        save_path = "C:\\Users\\mawena\\Downloads\\Youtube\\"
+        clear_cmd = "cls"
+    else:
+        save_path = "/home/mawena/Downloads/Youtube"
+        clear_cmd = "clear"
+    os.system("cls")
     _banner()
 
     video_or_playlist_choice = int(input("votre choix: "))
@@ -57,7 +66,8 @@ with Progress(
 
     def _start():
         global video_or_playlist_choice, youtube_link
-        console.clear()
+        global save_path
+        os.system("cls")
         if video_or_playlist_choice == 1:
             video(youtube_link)
         else:
@@ -70,6 +80,7 @@ with Progress(
 
     def video(link):
         global progress, task
+        global save_path, clear_cmd
         youtube = YouTube(link, on_progress_callback=downloading)
 
         console.print("[blue]-----Download start-----[/blue]")
@@ -80,12 +91,13 @@ with Progress(
                 total=stream.filesize,
                 filename=stream.title,
             )
-            stream.download("/home/mawena/Downloads/Youtube", skip_existing=False)
+            stream.download(save_path, skip_existing=False)
         except Exception:
             console.print("[red]Mistake")
 
     def playlist(link):
         global progress, task
+        global save_path
         console.print(
             "[yellow]-----------Playlist processing and Start of Downloads-----------"
         )
@@ -105,7 +117,7 @@ with Progress(
                     filename=f"{index}{stream.title}",
                 )
                 stream.download(
-                    f"/home/mawena/Downloads/Youtube/{youtube_playlist.title}/",
+                    f"{save_path}{youtube_playlist.title}/",
                     filename_prefix=index,
                     skip_existing=False,
                 )
@@ -114,5 +126,5 @@ with Progress(
         console.print("[blue]-----------Fin-----------")
 
     if __name__ == "__main__":
-        console.clear()
+        os.system("cls")
         _start()
