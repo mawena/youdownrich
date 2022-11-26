@@ -10,5 +10,5 @@ Lauch:
 $ python3 install youdownrich
 ~~~~
 
-![alt text](pics/launch.png)
+![alt text](pics/start.png)
 ![alt text](pics/downloading.png)
